@@ -1,0 +1,21 @@
+# ninja log v5
+1	623	6922163431661265	abc_autogen/timestamp	7540b99912f7794c
+1	623	6922163431661265	abc_autogen/mocs_compilation.cpp	7540b99912f7794c
+1	623	6922163431661265	D:/Workspace/Thesis/QTApp/appUsingQt/referApp/build-abc-Desktop_Qt_6_4_1_MinGW_64_bit-Debug/abc_autogen/timestamp	7540b99912f7794c
+1	623	6922163431661265	D:/Workspace/Thesis/QTApp/appUsingQt/referApp/build-abc-Desktop_Qt_6_4_1_MinGW_64_bit-Debug/abc_autogen/mocs_compilation.cpp	7540b99912f7794c
+623	2148	6922163448337664	CMakeFiles/abc.dir/abc_autogen/mocs_compilation.cpp.obj	22da7d9453f75f1f
+628	2189	6922163448737766	CMakeFiles/abc.dir/main.cpp.obj	5abb84dac136730e
+625	2224	6922163449087835	CMakeFiles/abc.dir/mainwindow.cpp.obj	7e674f1f200fb8d
+2225	2360	6922163450428146	abc.exe	fa1b07d51a585f2f
+8	194	6922165025610559	abc_autogen/timestamp	7540b99912f7794c
+8	194	6922165025610559	abc_autogen/mocs_compilation.cpp	7540b99912f7794c
+8	194	6922165025610559	D:/Workspace/Thesis/QTApp/appUsingQt/referApp/build-abc-Desktop_Qt_6_4_1_MinGW_64_bit-Debug/abc_autogen/timestamp	7540b99912f7794c
+8	194	6922165025610559	D:/Workspace/Thesis/QTApp/appUsingQt/referApp/build-abc-Desktop_Qt_6_4_1_MinGW_64_bit-Debug/abc_autogen/mocs_compilation.cpp	7540b99912f7794c
+202	1649	6922165040152128	CMakeFiles/abc.dir/mainwindow.cpp.obj	7e674f1f200fb8d
+1649	1781	6922165041456327	abc.exe	fa1b07d51a585f2f
+8	195	6922165215200654	abc_autogen/timestamp	7540b99912f7794c
+8	195	6922165215200654	abc_autogen/mocs_compilation.cpp	7540b99912f7794c
+8	195	6922165215200654	D:/Workspace/Thesis/QTApp/appUsingQt/referApp/build-abc-Desktop_Qt_6_4_1_MinGW_64_bit-Debug/abc_autogen/timestamp	7540b99912f7794c
+8	195	6922165215200654	D:/Workspace/Thesis/QTApp/appUsingQt/referApp/build-abc-Desktop_Qt_6_4_1_MinGW_64_bit-Debug/abc_autogen/mocs_compilation.cpp	7540b99912f7794c
+204	1637	6922165229629078	CMakeFiles/abc.dir/mainwindow.cpp.obj	7e674f1f200fb8d
+1637	1780	6922165231029068	abc.exe	fa1b07d51a585f2f

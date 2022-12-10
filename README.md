@@ -1,1 +1,0 @@
-# appUsingQt
