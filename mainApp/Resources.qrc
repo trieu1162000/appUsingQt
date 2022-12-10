@@ -1,0 +1,65 @@
+<RCC>
+    <qresource prefix="/imgs">
+        <file>icon_image/vitme.PNG</file>
+        <file>icon_image/stop.png</file>
+        <file>icon_image/search (1).png</file>
+        <file>icon_image/run.png</file>
+        <file>icon_image/road.png</file>
+        <file>icon_image/refresh.png</file>
+        <file>icon_image/received (1).png</file>
+        <file>icon_image/port1_rsz.png</file>
+        <file>icon_image/pallet-icon-png.png</file>
+        <file>icon_image/pallet-icon-png.ico</file>
+        <file>icon_image/mode (1).png</file>
+        <file>icon_image/icons8-home-16.png</file>
+        <file>icon_image/icons8-fork-lift-64.png</file>
+        <file>icon_image/icons8-fork-lift-64.ico</file>
+        <file>icon_image/icon_velocity.png</file>
+        <file>icon_image/icon_template.png</file>
+        <file>icon_image/icon_task.png</file>
+        <file>icon_image/icon_show.png</file>
+        <file>icon_image/icon_save.png</file>
+        <file>icon_image/icon_run.png</file>
+        <file>icon_image/icon_report.ico</file>
+        <file>icon_image/icon_remove.png</file>
+        <file>icon_image/icon_refresh.png</file>
+        <file>icon_image/icon_preview.png</file>
+        <file>icon_image/icon_position.png</file>
+        <file>icon_image/icon_port.png</file>
+        <file>icon_image/icon_port.ico</file>
+        <file>icon_image/icon_phone.png</file>
+        <file>icon_image/icon_person.png</file>
+        <file>icon_image/icon_pause.png</file>
+        <file>icon_image/icon_pallet.png</file>
+        <file>icon_image/icon_orient.png</file>
+        <file>icon_image/icon_order.ico</file>
+        <file>icon_image/icon_nodeMap.png</file>
+        <file>icon_image/icon_monitoringtask.ico</file>
+        <file>icon_image/icon_monitor.png</file>
+        <file>icon_image/icon_monitor.ico</file>
+        <file>icon_image/icon_manual.ico</file>
+        <file>icon_image/icon_line_tracking.png</file>
+        <file>icon_image/icon_info_small.png</file>
+        <file>icon_image/icon_info.png</file>
+        <file>icon_image/icon_info.ico</file>
+        <file>icon_image/icon_hide.png</file>
+        <file>icon_image/icon_help.png</file>
+        <file>icon_image/icon_email.png</file>
+        <file>icon_image/icon_disconnect.png</file>
+        <file>icon_image/icon_delete.png</file>
+        <file>icon_image/icon_database.ico</file>
+        <file>icon_image/icon_connect.png</file>
+        <file>icon_image/icon_battery.png</file>
+        <file>icon_image/icon_agv.ico</file>
+        <file>icon_image/icon_addtask.ico</file>
+        <file>icon_image/icon_addagv.png</file>
+        <file>icon_image/icon_addagv.ico</file>
+        <file>icon_image/icon_add.png</file>
+        <file>icon_image/forklift-truck.png</file>
+        <file>icon_image/box (1).png</file>
+        <file>icon_image/Goods.PNG</file>
+        <file>icon_image/Ga_nang.PNG</file>
+        <file>icon_image/120787.png</file>
+        <file>icon_image/map.png</file>
+    </qresource>
+</RCC>
