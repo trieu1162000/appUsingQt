@@ -24,6 +24,14 @@ MainWindow::MainWindow(QWidget *node_parent)
     qDebug() << node_i4_window->get_rows();
     ui->nodes_comboBox->addItems(node_i4_window->get_node_ids());
     create_map();
+    nodes->node_count = node_i4_window->get_rows();
+    orient_matrix = create_orient_matrix();
+    int myInt = 0xFF;
+    QByteArray bA;
+    qDebug() << bA;
+    QDataStream stream(&bA, QIODevice::WriteOnly);
+    stream << myInt;
+    qDebug() << bA;
 
 }
 
@@ -33,11 +41,65 @@ MainWindow::~MainWindow()
 }
 
 
+void MainWindow::create_path_run(QVector<QString> path)
+{
+    path.clear();
+    for(int i = 0; i< path_run.size()-1; i++)
+    {
+        path.append(path_run[i]);
+        path.append(QString((orient_matrix[path_run[i].toInt()][path_run[i+1].toInt()])));
+    }
+    qDebug() << path;
+}
+
+QVector<QVector<char>> MainWindow::create_orient_matrix()
+{
+    QVector<QVector<char>> matrix(nodes->node_count, QVector<char>(nodes->node_count));
+//    qDebug() << nodes->node_count;
+    for (int i = 0; i < nodes->node_count; i++)
+    {
+        QString n_nodes = node_i4_window->get_neighbour(i);
+        QStringList n_nodes_list = n_nodes.split(", ");
+        foreach (QString n_node, n_nodes_list)
+        {
+            int j = n_node.toInt();
+            int vector[1][2];
+            int dX = (nodes[j].x - nodes[i].x);
+            int dY = (nodes[j].y - nodes[i].y);
+            vector[0][0] = dX / (int)qSqrt(dX * dX + dY * dY);
+            vector[0][1] = dY / (int)qSqrt(dX * dX + dY * dY);
+            switch (vector[0][0])
+            {
+                case 0:
+                    switch(vector[0][1])
+                    {
+                        case 1:
+                            matrix[i][j] = 'S';
+                            break;
+                        case -1:
+                            matrix[i][j] = 'N';
+                            break;
+                    }
+                    break;
+                case 1:
+                    matrix[i][j] = 'E';
+                    break;
+                case -1:
+                    matrix[i][j] = 'W';
+                    break;
+            }
+        }
+    }
+
+    return matrix;
+}
+
 
 void MainWindow::create_map()
 {
     nodes = new Node[node_i4_window->get_rows()];
     for(int i = 0; i < 16; i++){
+        nodes[i].node_id = i;
         nodes[i].node_parent = nullptr;
         nodes[i].is_visited = false;
         nodes[i].is_obstacle = false;
@@ -47,27 +109,21 @@ void MainWindow::create_map()
         QStringList n_nodes_list = n_nodes.split(", ");
         foreach(QString n_node, n_nodes_list){
             nodes[i].nodes_neighbour.push_back(&nodes[n_node.toInt()]);
-            qDebug() << n_node.toInt();
+//            qDebug() << n_node.toInt();
         }
 
     }
 
     node_start = &nodes[15];
-    ui->robot_label->setGeometry(nodes[15].x-15, nodes[15].y+45, 61, 31 );
+    ui->robot_label->setGeometry(nodes[15].x-10, nodes[15].y+45, 61, 31 );
+    update_map();
 }
 
 void MainWindow::update_map()
 {
-
-    if(run_btn_clicked)
-    {
-
-
-        solve_AStar(); // Solve in "real-time" gives a nice effect
-        run_btn_clicked = false;
-
-    }
     //drawing
+    ui->robot_label->setGeometry(nodes[robot_current_node].x-10, nodes[robot_current_node].y+45, 61, 31 );
+//    ui->
     scene->clear();
     draw_connections();
     draw_nodes();
@@ -164,7 +220,7 @@ void MainWindow::draw_nodes()
     for (int i = 0; i < 16; i++)
     {
             QGraphicsTextItem *text_node_id = scene->addText(QString::number(i));
-            text_node_id->setPos(nodes[i].x+5, nodes[i].y-62);
+            text_node_id->setPos(nodes[i].x-7, nodes[i].y-62);
             QGraphicsRectItem* rItem = new QGraphicsRectItem();
             rItem->setPos(nodes[i].x, nodes[i].y-70 );
             rItem->setRect(0,0, 10, 10);
@@ -208,9 +264,11 @@ void MainWindow::draw_nodes()
 
 void MainWindow::draw_path()
 {
+    QVector<QString> temp_path;
     if (node_end != nullptr)
     {
         Node *p = node_end;
+        temp_path.push_back(QString::number(p->node_id));
         while (p->node_parent != nullptr)
         {
             QGraphicsLineItem* lineItem = new QGraphicsLineItem();
@@ -220,28 +278,59 @@ void MainWindow::draw_path()
             lineItem->setPen(pen);
             lineItem->setLine(p->x + 5, p->y - 65,
                 p->node_parent->x + 5, p->node_parent->y - 65);
+            temp_path.push_back(QString::number(p->node_parent->node_id));
             scene->addItem(lineItem);
 
             // Set next node to this node's node_parent
             p = p->node_parent;
         }
     }
+    std::reverse(temp_path.begin(), temp_path.end());
+    path_run = temp_path;
+    qDebug() << path_run;
+    temp_path.clear();
 }
-
-
 
 void MainWindow::loop()
 {
-    m_deltaTime = m_elapsedTimer.elapsed();
-    m_elapsedTimer.restart();
+    ui->battery_progressBar->setValue(robot_battery);
+    ui->water_c_progressBar->setValue(robot_water_capacity);
 
-    m_loopTime += m_deltaTime;
-    if( m_loopTime > m_loopSpeed)
+
+    if(node_end == nullptr)
     {
-        m_loopTime -= m_loopSpeed;
-        update_map();
+        // do nothing
     }
-    qDebug() << "Called";
+    else if(robot_current_node == node_end->node_id && flag_run_back == 0)
+    {
+        flag_run_back = 1;
+        robot_mode = 1;
+        node_start = node_end;
+        node_end = &nodes[15];
+        path_run.clear();
+        solve_AStar();
+        scene->clear();
+        draw_connections();
+        draw_nodes();
+        draw_path();
+        create_path_run(path_run_back);
+        emit(send_path_run_back_signal(path_run_back));
+
+        // send path run back (UART)
+//        emit
+    }
+
+    else if(robot_current_node == node_end->node_id && flag_run_back == 1)
+    {
+        flag_run_back = 0;
+        robot_mode = 0; // STOP/CHARGING
+        node_start = &nodes[15];
+        node_end = nullptr;
+        path_run_back.clear();
+        scene->clear();
+        draw_connections();
+        draw_nodes();
+    }
 }
 
 //void MainWindow::keyPressEvent(QKeyEvent *event)
@@ -300,17 +389,33 @@ void MainWindow::receive_is_connected_from_main(int value)
     qDebug() << "Receive from main:" << value;
     receive_value_connected = value;
     if(value){
-        ui->connected_label->setText("COM4 is connected");
+        ui->connected_label->setText(QString(sc_window->portName +" is connected"));
         ui->connected_label->setStyleSheet("QLabel { color : Green;}");
+        disconnect(sc_window, SIGNAL(pass_data_to_main(QString)), this, SLOT(receive_data_from_sc(QString)));
+        connect(sc_window, SIGNAL(pass_data_to_main(QString)), this, SLOT(receive_data_from_sc(QString)));
     }
     else
         ui->connected_label->setText("Please set COM port!");
 }
 
-void MainWindow::receive_data_from_sc(QString data)
+void MainWindow::receive_data_from_sc(QList<std::byte> data)
 {
     qDebug() << "Receive data:" << data;
-    robot_info = data;
+    // robot info
+    if(data.at(0) == (std::byte)0xA0)
+    {
+        robot_speed = (uint8_t) data.at(1);
+        robot_battery = (uint8_t) data.at(2);
+        robot_water_capacity = (uint8_t) data.at(3);
+    }
+    // auto info
+    else if(data.at(0) == (std::byte)0xA1)
+    {
+        robot_current_node = (uint8_t) data.at(1);
+        robot_current_orient = (uint8_t) data.at(2);
+        obstacle_distance = (uint8_t) data.at(3);
+
+    }
 }
 
 void MainWindow::show_back(){
@@ -324,17 +429,23 @@ void MainWindow::on_setting_pushButton_clicked()
     if(sc_is_created == 0)
     {
         sc_window = new setting_com_window(this);
+        qDebug() << "called";
         sc_is_created = 1;
     }
     sc_window->sc_is_connected = receive_value_connected;
     sc_window->show();
     disconnect(sc_window, SIGNAL(sc_send_is_connected(int)), this, SLOT(receive_is_connected_from_main(int)));
     connect(sc_window, SIGNAL(sc_send_is_connected(int)), this, SLOT(receive_is_connected_from_main(int)));
+    connect(this, SIGNAL(send_path_run_signal(QList<QString>)), sc_window, SLOT(send_path_run(QList<QString>)));
+    connect(this, SIGNAL(send_path_run_back_signal(QList<QString>)), sc_window, SLOT(send_path_run_back(QList<QString>)));
+    connect(this, SIGNAL(send_mode_signal(int)), sc_window, SLOT(send_mode(int)));
+    connect(this, SIGNAL(send_direction_signal(int)), sc_window, SLOT(send_direction(int)));
+    connect(this, SIGNAL(send_start_task_node_signal(int)), sc_window, SLOT(send_start_task_node(int)));
 }
 
 void MainWindow::on_run_button_clicked()
 {
-    if(robot_status == 0){
+    if(robot_mode == 0){ // STOP mode
 
         if(ui->velocity_textedit->toPlainText().toInt() == 0)
         {
@@ -348,12 +459,14 @@ void MainWindow::on_run_button_clicked()
         else{
             node_end = &nodes[ui->nodes_comboBox->currentText().toInt()];
             run_btn_clicked = true;
+            solve_AStar();
+            update_map();
+            create_path_run(path_run);
+            emit(send_path_run_signal(path_run));
             ui->graphicsView->setScene(scene);
 
-            disconnect(sc_window, SIGNAL(pass_data_to_main(QString)), this, SLOT(receive_data_from_sc(QString)));
-            connect(sc_window, SIGNAL(pass_data_to_main(QString)), this, SLOT(receive_data_from_sc(QString)));
             ui->pause_resume_button->setEnabled(true);
-            robot_status = 1;
+            robot_mode = 1; // auto mode
             // Change button to STOP
             QPixmap pixmap_stop(":/imgs/icon_image/stop.png");
             QIcon icon_stop(pixmap_stop);
@@ -369,7 +482,7 @@ void MainWindow::on_run_button_clicked()
         ui->run_button->setText("Run");
 
         ui->pause_resume_button->setEnabled(false);
-        robot_status = 0;
+        robot_mode = 0; // STOP mode
     }
 
 }

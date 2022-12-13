@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QtMath>
 #include <QButtonGroup>
 #include <QMessageBox>
 #include <QSize>
@@ -30,7 +31,7 @@ private slots:
     void on_setting_pushButton_clicked();
     void receive_is_connected_from_main(int);
     void on_run_button_clicked();
-    void receive_data_from_sc(QString);
+    void receive_data_from_sc(QList<std::byte>);
     void show_back();
 
     void on_pause_resume_button_clicked();
@@ -39,12 +40,32 @@ private slots:
 
     void on_nodes_i4_pushButton_clicked();
 
+signals:
+    void send_path_run_signal(QList<QString>);
+    void send_path_run_back_signal(QList<QString>);
+    void send_mode_signal(int);
+    void send_direction_signal(int);
+    void send_start_task_node_signal(int);
+
 private:
     setting_com_window *sc_window;
     nodes_info *node_i4_window;
     int sc_is_created = 0;
     int nodei4_is_created = 0;
     QString robot_info;
+
+    // robot info
+    uint8_t robot_battery = 0;
+    uint8_t robot_speed = 0;
+    uint8_t robot_water_capacity = 0;
+
+    // auto mode info
+    uint8_t robot_current_node = 15;
+    uint8_t robot_current_orient = 'N';
+    uint8_t obstacle_distance = 0;
+
+    int robot_mode = 0;
+    QVector<QString> path_run, path_run_task, path_run_back;
     QGraphicsScene *scene;
     int robot_status = 0; // 0 is stop and 1 is running
     void create_map();
@@ -54,6 +75,8 @@ private:
     void draw_nodes();
     void draw_path();
     void renderScene();
+    void create_path_run(QVector<QString>);
+    QVector<QVector<char>> create_orient_matrix();
 
     const QSize UNIT_SIZE   = QSize(5  , 5  );
     const QSize WINDOW_SIZE = QSize(135, 135);
@@ -62,6 +85,7 @@ private:
     QList<Node*> nodes_in_path;
     int nMapWidth = 5;
     int nMapHeight = 3;
+    int flag_run_back = 0;
 
     int m_mousePosX = 0;
     int m_mousePosY = 0;
@@ -71,7 +95,7 @@ private:
 
     int FPS           = 60;
     float m_deltaTime = 0.0f;
-    float m_loopTime  = 0.0f;
+    float m_loopTime  = 100;
     const float m_loopSpeed = int(1000.0f/FPS);
     QTimer m_timer;
     QElapsedTimer m_elapsedTimer;
@@ -79,5 +103,8 @@ private:
     Node* nodes = nullptr;
     Node* node_start = nullptr;
     Node* node_end = nullptr;
+
+    QVector<QVector<char>> orient_matrix;
+
 };
 #endif // MAINWINDOW_H

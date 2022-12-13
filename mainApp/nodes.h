@@ -10,6 +10,8 @@ struct Node
     float fLocalGoal;
     int x;
     int y;
+    int node_id;
+    int node_count;
     QVector<Node*> nodes_neighbour;
     Node* node_parent;
 };

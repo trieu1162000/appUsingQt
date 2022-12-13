@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>251</width>
-    <height>393</height>
+    <height>351</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,13 +19,19 @@
      <x>10</x>
      <y>10</y>
      <width>231</width>
-     <height>371</height>
+     <height>331</height>
     </rect>
    </property>
    <property name="font">
     <font>
      <pointsize>11</pointsize>
     </font>
+   </property>
+   <property name="whatsThis">
+    <string/>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">background-color : LightSteelBlue;</string>
    </property>
    <property name="title">
     <string>Setting</string>
@@ -42,7 +48,11 @@
     <property name="font">
      <font>
       <pointsize>11</pointsize>
+      <bold>true</bold>
      </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">font-weight : bold; color : Navy;</string>
     </property>
     <property name="text">
      <string>COM Port:</string>
@@ -60,7 +70,11 @@
     <property name="font">
      <font>
       <pointsize>11</pointsize>
+      <bold>true</bold>
      </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">font-weight : bold; color : Navy;</string>
     </property>
     <property name="text">
      <string>Baund Rate:</string>
@@ -78,7 +92,11 @@
     <property name="font">
      <font>
       <pointsize>11</pointsize>
+      <bold>true</bold>
      </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">font-weight : bold; color : Navy;</string>
     </property>
     <property name="text">
      <string>Data Bits:</string>
@@ -87,9 +105,9 @@
    <widget class="QLabel" name="connected_label">
     <property name="geometry">
      <rect>
-      <x>30</x>
+      <x>50</x>
       <y>290</y>
-      <width>201</width>
+      <width>191</width>
       <height>20</height>
      </rect>
     </property>
@@ -114,7 +132,11 @@
     <property name="font">
      <font>
       <pointsize>11</pointsize>
+      <bold>true</bold>
      </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">font-weight : bold; color : Navy;</string>
     </property>
     <property name="text">
      <string>Parity:</string>
@@ -132,7 +154,11 @@
     <property name="font">
      <font>
       <pointsize>11</pointsize>
+      <bold>true</bold>
      </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">font-weight : bold; color : Navy;</string>
     </property>
     <property name="text">
      <string>Stop Bits:</string>
@@ -150,7 +176,11 @@
     <property name="font">
      <font>
       <pointsize>11</pointsize>
+      <bold>true</bold>
      </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">font-weight : bold; color : Navy;</string>
     </property>
     <property name="text">
      <string>Connect</string>
@@ -163,16 +193,20 @@
    <widget class="QPushButton" name="rescan_pushButton">
     <property name="geometry">
      <rect>
-      <x>150</x>
+      <x>120</x>
       <y>240</y>
-      <width>71</width>
+      <width>101</width>
       <height>25</height>
      </rect>
     </property>
     <property name="font">
      <font>
       <pointsize>11</pointsize>
+      <bold>true</bold>
      </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">font-weight : bold; color : Navy;</string>
     </property>
     <property name="text">
      <string>Rescan</string>
@@ -185,9 +219,9 @@
    <widget class="QComboBox" name="port_comboBox">
     <property name="geometry">
      <rect>
-      <x>150</x>
+      <x>130</x>
       <y>40</y>
-      <width>71</width>
+      <width>91</width>
       <height>21</height>
      </rect>
     </property>
@@ -200,9 +234,9 @@
    <widget class="QComboBox" name="brate_comboBox">
     <property name="geometry">
      <rect>
-      <x>150</x>
+      <x>130</x>
       <y>80</y>
-      <width>71</width>
+      <width>91</width>
       <height>21</height>
      </rect>
     </property>
@@ -215,9 +249,9 @@
    <widget class="QComboBox" name="dtbits_comboBox">
     <property name="geometry">
      <rect>
-      <x>150</x>
+      <x>130</x>
       <y>120</y>
-      <width>71</width>
+      <width>91</width>
       <height>21</height>
      </rect>
     </property>
@@ -230,9 +264,9 @@
    <widget class="QComboBox" name="sbits_comboBox">
     <property name="geometry">
      <rect>
-      <x>150</x>
+      <x>130</x>
       <y>160</y>
-      <width>71</width>
+      <width>91</width>
       <height>21</height>
      </rect>
     </property>
@@ -245,9 +279,9 @@
    <widget class="QComboBox" name="parity_comboBox">
     <property name="geometry">
      <rect>
-      <x>150</x>
+      <x>130</x>
       <y>200</y>
-      <width>71</width>
+      <width>91</width>
       <height>21</height>
      </rect>
     </property>
@@ -257,54 +291,10 @@
      </font>
     </property>
    </widget>
-   <widget class="QPushButton" name="ok_pushButton">
-    <property name="geometry">
-     <rect>
-      <x>30</x>
-      <y>330</y>
-      <width>71</width>
-      <height>25</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>11</pointsize>
-     </font>
-    </property>
-    <property name="text">
-     <string>OK</string>
-    </property>
-    <property name="icon">
-     <iconset resource="Resources.qrc">
-      <normaloff>:/imgs/icon_image/icon_task.png</normaloff>:/imgs/icon_image/icon_task.png</iconset>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="cancel_pushButton">
-    <property name="geometry">
-     <rect>
-      <x>150</x>
-      <y>330</y>
-      <width>71</width>
-      <height>25</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>11</pointsize>
-     </font>
-    </property>
-    <property name="text">
-     <string>Cancel</string>
-    </property>
-    <property name="icon">
-     <iconset resource="Resources.qrc">
-      <normaloff>:/imgs/icon_image/icon_delete.png</normaloff>:/imgs/icon_image/icon_delete.png</iconset>
-    </property>
-   </widget>
    <widget class="QLabel" name="ic_connected_label">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>30</x>
       <y>290</y>
       <width>16</width>
       <height>16</height>

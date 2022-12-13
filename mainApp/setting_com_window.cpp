@@ -42,6 +42,9 @@ setting_com_window::setting_com_window(QWidget *parent) :
     ui->parity_comboBox->addItem("Even Parity");
     ui->parity_comboBox->addItem("Odd Parity");
 
+//    header_size = header.size();
+//    EOF_size = EOFrame.size();
+
 }
 
 setting_com_window::~setting_com_window()
@@ -53,7 +56,7 @@ void setting_com_window::on_connect_pushButton_clicked()
 {
     ui->connected_label->show();
     ui->ic_connected_label->show();
-    QString portName = ui->port_comboBox->currentText();
+    portName = ui->port_comboBox->currentText();
     serialPort.setPortName(portName);
     serialPort.open(QIODevice::ReadWrite);
 //    if(sc_is_connected == 1)
@@ -74,7 +77,10 @@ void setting_com_window::on_connect_pushButton_clicked()
     if(ui->connect_pushButton->text()=="Connect"){
         if(!serialPort.isOpen()){
             ui->connected_label->setStyleSheet("QLabel {color : darkred}");
-            ui->connected_label->setText(QString("Can not connect to ") + QString(portName));
+            if(portName == nullptr)
+                ui->connected_label->setText("No PORT available");
+            else
+                ui->connected_label->setText(QString("Can not connect to ") + QString(portName));
             QPixmap pixmap(":/imgs/icon_image/icon_disconnect.png");
             ui->ic_connected_label->setPixmap(pixmap);
             sc_is_connected = 0;
@@ -135,6 +141,7 @@ void setting_com_window::on_connect_pushButton_clicked()
             QPixmap pixmap1(":/imgs/icon_image/icon_connect.png");
             ui->ic_connected_label->setPixmap(pixmap1);
             sc_is_connected = 1;
+            emit sc_send_is_connected(sc_is_connected);
         }
     }
     else
@@ -152,32 +159,80 @@ void setting_com_window::on_connect_pushButton_clicked()
         QPixmap pixmap1(":/imgs/icon_image/icon_disconnect.png");
         ui->ic_connected_label->setPixmap(pixmap1);
         sc_is_connected = 0;
+        emit sc_send_is_connected(sc_is_connected);
     }
 }
 
 void setting_com_window::receive_message()
 {
     QByteArray data_BA = serialPort.readAll();
-    QString data(data_BA);
-    buffer.append(data);
-    emit pass_data_to_main(buffer);
-    buffer.clear();
-//    int index = buffer.indexOf(code);
-//    if(index != -1){
-//       QString message = buffer.mid(0,index);
-//       buffer.remove(0,index+codeSize);
-//    }
+    qDebug() << data_BA;
+    if(data_BA.size()<8)
+        return;
+//    QString data(data_BA);
+//    buffer.append(data);
+//    int index_header = buffer.indexOf(header);
+//    int index_EOF = buffer.indexOf(EOFrame);
+    QDataStream stream(&data_BA, QIODevice::ReadWrite);
+    stream >> bytes_received;
+    for(int i = 0; i<bytes_received.size()-3; i++)
+    {
+        if(bytes_received.at(i) == (std::byte) 0xFF  && bytes_received.at(i+1) == (std::byte) 0xAA)
+        {
+            start_index = i;
+            break;
+        }
+
+    }
+    for(int i = 0; i<bytes_received.size()-3; i++)
+    {
+        if(bytes_received.at(i) == (std::byte) 0x0A  && bytes_received.at(i+1) == (std::byte) 0x0D)
+        {
+            stop_index = i;
+            if(stop_index > start_index)
+                break;
+        }
+
+    }
+    for(int i = start_index; i < stop_index; i++)
+    {
+        main_bytes_received.append(bytes_received.at(i));
+
+    }
+
+    emit pass_data_to_main(main_bytes_received);
+    main_bytes_received.clear();
+    bytes_received.clear();
 
 }
 
-
-void setting_com_window::on_ok_pushButton_clicked()
+void setting_com_window::send_path_run(QList<QString> path)
 {
-//    connect(Ui::MainWindow ui, SIGNAL(main_send_is_connected(int)), this, SLOT(sc_is_connected(int)));
-    qDebug() << "Signal is called";
-    emit sc_send_is_connected(sc_is_connected);
-    this->hide();
+
 }
+
+void setting_com_window::send_path_run_back(QList<QString> path)
+{
+
+}
+
+void setting_com_window::send_direction(int)
+{
+
+}
+
+void setting_com_window::send_start_task_node(int)
+{
+
+}
+
+void setting_com_window::send_mode(int)
+{
+
+}
+
+
+
 
 
 
