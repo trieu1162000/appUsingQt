@@ -13,10 +13,12 @@ MainWindow::MainWindow(QWidget *node_parent)
     ui->setupUi(this);
 
     ui->pause_resume_button->setEnabled(false);
-    connect(&m_timer, &QTimer::timeout, this, &MainWindow::loop);
-    m_timer.start(m_loopTime);
-    m_elapsedTimer.start();
-
+    connect(&m_timer, &QTimer::timeout, this, &MainWindow::update_loop);
+    connect(&handle_task_timer, &QTimer::timeout, this, &MainWindow::handle_task_loop);
+    connect(&handle_run_back_timer, &QTimer::timeout, this, &MainWindow::handle_run_back_loop);
+//    m_elapsedTimer.start();
+//    m_timer.start(m_loopTime);
+//    handle_task_timer.start(m_loopTime);
     scene = new QGraphicsScene(this);
     ui->graphicsView->setScene(scene);
     node_i4_window = new nodes_info(this);
@@ -26,12 +28,24 @@ MainWindow::MainWindow(QWidget *node_parent)
     create_map();
     nodes->node_count = node_i4_window->get_rows();
     orient_matrix = create_orient_matrix();
-    int myInt = 0xFF;
-    QByteArray bA;
-    qDebug() << bA;
-    QDataStream stream(&bA, QIODevice::WriteOnly);
-    stream << myInt;
-    qDebug() << bA;
+
+    // Set rows and columns size
+    ui->monitor_tableWidget->setColumnWidth(0, 135);
+    ui->monitor_tableWidget->setColumnWidth(1, 135);
+    ui->monitor_tableWidget->setColumnWidth(2, 135);
+    ui->monitor_tableWidget->setColumnWidth(3, 135);
+
+    ui->task_tableWidget->setColumnWidth(0, 30);
+    ui->task_tableWidget->setColumnWidth(1, 270);
+    ui->task_tableWidget->setColumnWidth(2, 50);
+    ui->task_tableWidget->setColumnWidth(3, 95);
+    ui->task_tableWidget->setColumnWidth(4, 95);
+//    int myInt = 0xFF;
+//    QByteArray bA;
+//    qDebug() << bA;
+//    QDataStream stream(&bA, QIODevice::WriteOnly);
+//    stream << myInt;
+//    qDebug() << bA;
 
 }
 
@@ -41,15 +55,17 @@ MainWindow::~MainWindow()
 }
 
 
-void MainWindow::create_path_run(QVector<QString> path)
+QVector<QString> MainWindow::create_path_run(QVector<QString> path)
 {
     path.clear();
-    for(int i = 0; i< path_run.size()-1; i++)
+    for(int i = 0; i< path_run.size(); i++)
     {
         path.append(path_run[i]);
-        path.append(QString((orient_matrix[path_run[i].toInt()][path_run[i+1].toInt()])));
+        if(i< path_run.size() -1)
+            path.append(QString((orient_matrix[path_run[i].toInt()][path_run[i+1].toInt()])));
     }
     qDebug() << path;
+    return path;
 }
 
 QVector<QVector<char>> MainWindow::create_orient_matrix()
@@ -127,7 +143,7 @@ void MainWindow::update_map()
     scene->clear();
     draw_connections();
     draw_nodes();
-    draw_path();
+//    draw_path();
 }
 
 bool MainWindow::solve_AStar()
@@ -262,11 +278,11 @@ void MainWindow::draw_nodes()
 
 }
 
-void MainWindow::draw_path()
+QVector<QString> MainWindow::draw_path(QVector<QString> temp_path)
 {
-    QVector<QString> temp_path;
     if (node_end != nullptr)
     {
+        temp_path.clear();
         Node *p = node_end;
         temp_path.push_back(QString::number(p->node_id));
         while (p->node_parent != nullptr)
@@ -286,51 +302,200 @@ void MainWindow::draw_path()
         }
     }
     std::reverse(temp_path.begin(), temp_path.end());
-    path_run = temp_path;
-    qDebug() << path_run;
-    temp_path.clear();
+    return temp_path;
+
 }
 
-void MainWindow::loop()
+void MainWindow::draw_task_path(QVector<QString> path)
 {
-    ui->battery_progressBar->setValue(robot_battery);
-    ui->water_c_progressBar->setValue(robot_water_capacity);
-
-
-    if(node_end == nullptr)
+    for(int i = 0; i < path.count()-1; i++)
     {
-        // do nothing
+        Node *p = &nodes[path[i].toInt()];
+        QGraphicsLineItem* lineItem = new QGraphicsLineItem();
+        QPen pen((QColor(Qt::red)));
+        pen.setWidth(UNIT_SIZE.width());
+        pen.setBrush(QBrush(QColor(Qt::red)));
+        lineItem->setPen(pen);
+        lineItem->setLine(p->x + 5, p->y - 65,
+            (p+1)->x + 5, (p+1)->y - 65);
+        scene->addItem(lineItem);
     }
-    else if(robot_current_node == node_end->node_id && flag_run_back == 0)
+
+}
+
+
+void MainWindow::handle_task_loop()
+{
+    if(task_to_do.isEmpty() || flag_run_back == 1 || robot_mode == 2)
     {
+//        qDebug() << "called";
+        handle_task_timer.stop();
+        return;
+    }
+    if(task_to_do.begin()->is_completed == false && task_to_do.begin()->is_running == false)
+    {
+//        qDebug() << "called";
+        scene->clear();
+        draw_connections();
+        draw_nodes();
+        // create path run
+        QString temp =  ui->task_tableWidget->item(task_to_do.begin()->task_id,1)->text();
+        path_run_task = temp.split(" -> ");
+        draw_task_path(path_run_task);
+//        qDebug() << "path run task" << path_run_task;
+        start_task_node = nodes[path_run_task.begin()->toInt()].node_id;
+        node_end = &nodes[path_run_task.begin()->toInt()];
+        for(int i = 1; i< path_run_task.count(); i++)
+            nodes[path_run_task[i].toInt()].is_obstacle = true;
+        path_run.clear();
+        solve_AStar();
+        path_run = draw_path(path_run);
+        qDebug() << "path run" << path_run;
+        path_run.removeLast();
+        path_run = path_run + path_run_task;
+        for(int i = 1; i< path_run_task.count(); i++)
+            nodes[path_run_task[i].toInt()].is_obstacle = false;
+
+
+//        qDebug() << path_run;
+        // send path_run
+        path_run = create_path_run(path_run);
+        path_run.append("G");
+        emit send_path_run_signal(path_run);
+        qDebug() << "stop";
+//        handle_task_timer.stop();
+
+    }
+    // if receive ACK
+    // is_running = true
+    if(task_to_do.begin()->is_running == true && task_to_do.begin()->is_completed == false)
+    {
+        QTableWidgetItem * item = new QTableWidgetItem();
+        QTableWidgetItem * item2 = new QTableWidgetItem();
+        item->setTextAlignment(Qt::AlignHCenter);
+        item2->setTextAlignment(Qt::AlignHCenter);
+        item->setText("Running");
+        ui->task_tableWidget->setItem(task_to_do.begin()->task_id, 2, item);
+        item2->setText(QTime::currentTime().toString("hh:mm:ss"));
+        ui->task_tableWidget->setItem(task_to_do.begin()->task_id, 3, item2);
+        handle_task_timer.stop();
+        return;
+    }
+
+    // if receive is_complete
+    if(task_to_do.begin()->is_completed == true)
+    {
+        QTableWidgetItem * item = new QTableWidgetItem();
+        QTableWidgetItem * item2 = new QTableWidgetItem();
+        item->setTextAlignment(Qt::AlignHCenter);
+        item2->setTextAlignment(Qt::AlignHCenter);
+        item->setText("Done");
+        ui->task_tableWidget->setItem(task_to_do.begin()->task_id, 2, item);
+        item2->setText(QTime::currentTime().toString("hh:mm:ss"));
+        ui->task_tableWidget->setItem(task_to_do.begin()->task_id, 4, item2);
         flag_run_back = 1;
-        robot_mode = 1;
-        node_start = node_end;
+        task_to_do.removeFirst();
+        handle_task_timer.stop();
+        return;
+    }
+
+
+}
+
+void MainWindow::handle_run_back_loop()
+{
+    if(flag_run_back == 0)
+    {
+        handle_run_back_timer.stop();
+        return;
+    }
+    if(flag_run_back == 1 && robot_current_node == nodes[path_run_task.last().toInt()].node_id)
+    {
         node_end = &nodes[15];
+        node_start = &nodes[path_run_task.last().toInt()];
         path_run.clear();
         solve_AStar();
         scene->clear();
         draw_connections();
         draw_nodes();
-        draw_path();
+        draw_path(path_run_back);
+        // send path run back
         create_path_run(path_run_back);
-        emit(send_path_run_back_signal(path_run_back));
-
-        // send path run back (UART)
-//        emit
+        emit send_path_run_back_signal(path_run_back);
     }
-
-    else if(robot_current_node == node_end->node_id && flag_run_back == 1)
+    // if receive ACK
+    // stop timer
+    if(flag_run_back == 1 && robot_current_node == 15)
     {
         flag_run_back = 0;
-        robot_mode = 0; // STOP/CHARGING
-        node_start = &nodes[15];
-        node_end = nullptr;
-        path_run_back.clear();
         scene->clear();
         draw_connections();
         draw_nodes();
+        return;
     }
+
+}
+
+void MainWindow::update_loop()
+{
+    ui->battery_progressBar->setValue(robot_battery);
+    ui->water_c_progressBar->setValue(robot_water_capacity);
+    velocity_item = new QTableWidgetItem;
+    velocity_item->setTextAlignment(Qt::AlignCenter);
+    current_node_item = new QTableWidgetItem;
+    current_node_item->setTextAlignment(Qt::AlignCenter);
+    current_orient_item = new QTableWidgetItem;
+    current_orient_item->setTextAlignment(Qt::AlignCenter);
+    status_item = new QTableWidgetItem;
+    status_item->setTextAlignment(Qt::AlignCenter);
+    switch (robot_mode){
+        case 0:
+            status_item->setText("Stop");
+            ui->monitor_tableWidget->setItem(0, 0, status_item);
+            break;
+        case 1:
+            status_item->setText("Running");
+            ui->monitor_tableWidget->setItem(0, 0, status_item);
+            break;
+        default:
+            status_item->setText("Stop");
+            ui->monitor_tableWidget->setItem(0, 0, status_item);
+            break;
+
+    }
+
+    velocity_item->setText(QString::number(robot_speed));
+    ui->monitor_tableWidget->setItem(0, 1, velocity_item);
+    current_orient_item->setText(QString((char)robot_current_orient));
+    ui->monitor_tableWidget->setItem(0, 2, current_orient_item);
+    current_node_item->setText(QString::number(robot_current_node));
+    ui->monitor_tableWidget->setItem(0, 3, current_node_item);
+
+
+    // if receive ACK path run
+//            handle_task_timer.start(m_loopTime);
+    // if receive task_complete && task_to_do.begin()->is_running = true
+//        task_to_do.begin()->is_completed = true;
+//          task_to_do.begin()->is_completed = false;
+//            handle_task_timer.start(m_loopTime);
+
+    // if receive ACK path_run_back
+//            handle_run_back_timer.start(m_loopTime);
+//        flag_run_back = 1;
+
+
+    if(robot_current_node == 15 && flag_run_back == 0 && !handle_task_timer.isActive())
+    {
+        handle_task_timer.start(m_loopTime);
+
+    }
+
+    if(robot_current_node == path_run_task.last().toInt() && flag_run_back == 1 && !handle_run_back_timer.isActive())
+    {
+        handle_run_back_timer.start(m_loopTime);
+    }
+
+
 }
 
 //void MainWindow::keyPressEvent(QKeyEvent *event)
@@ -387,7 +552,7 @@ void MainWindow::loop()
 void MainWindow::receive_is_connected_from_main(int value)
 {
     qDebug() << "Receive from main:" << value;
-    receive_value_connected = value;
+//    receive_value_connected = value;
     if(value){
         ui->connected_label->setText(QString(sc_window->portName +" is connected"));
         ui->connected_label->setStyleSheet("QLabel { color : Green;}");
@@ -425,14 +590,13 @@ void MainWindow::show_back(){
 
 void MainWindow::on_setting_pushButton_clicked()
 {
-    qDebug() << "clicked";
+//    qDebug() << "clicked";
     if(sc_is_created == 0)
     {
         sc_window = new setting_com_window(this);
-        qDebug() << "called";
         sc_is_created = 1;
     }
-    sc_window->sc_is_connected = receive_value_connected;
+//    sc_window->sc_is_connected = receive_value_connected;
     sc_window->show();
     disconnect(sc_window, SIGNAL(sc_send_is_connected(int)), this, SLOT(receive_is_connected_from_main(int)));
     connect(sc_window, SIGNAL(sc_send_is_connected(int)), this, SLOT(receive_is_connected_from_main(int)));
@@ -441,48 +605,91 @@ void MainWindow::on_setting_pushButton_clicked()
     connect(this, SIGNAL(send_mode_signal(int)), sc_window, SLOT(send_mode(int)));
     connect(this, SIGNAL(send_direction_signal(int)), sc_window, SLOT(send_direction(int)));
     connect(this, SIGNAL(send_start_task_node_signal(int)), sc_window, SLOT(send_start_task_node(int)));
+//    qDebug() << "called";
 }
 
 void MainWindow::on_run_button_clicked()
 {
-    if(robot_mode == 0){ // STOP mode
-
-        if(ui->velocity_textedit->toPlainText().toInt() == 0)
+    task_to_do.clear();
+    for(int i = 0; i<ui->task_tableWidget->rowCount(); i++)
+    {
+        if(ui->task_tableWidget->item(i, 2)->text() == "Waiting")
         {
-            QMessageBox warning_set_velocity;
-            warning_set_velocity.setText("WARNING!\nPlease set initial velocity!");
-            warning_set_velocity.setIcon(QMessageBox::Warning);
-            warning_set_velocity.setWindowTitle("Caution");
-            warning_set_velocity.exec();
-
-        }
-        else{
-            node_end = &nodes[ui->nodes_comboBox->currentText().toInt()];
-            run_btn_clicked = true;
-            solve_AStar();
-            update_map();
-            create_path_run(path_run);
-            emit(send_path_run_signal(path_run));
-            ui->graphicsView->setScene(scene);
-
-            ui->pause_resume_button->setEnabled(true);
-            robot_mode = 1; // auto mode
-            // Change button to STOP
-            QPixmap pixmap_stop(":/imgs/icon_image/stop.png");
-            QIcon icon_stop(pixmap_stop);
-            ui->run_button->setIcon(icon_stop);
-            ui->run_button->setText("Stop");
+            task temp;
+            temp.is_completed = false;
+            temp.is_running = false;
+            temp.task_id = i;
+            task_to_do.append(temp);
         }
     }
+
+
+    if(task_to_do.size() == 0)
+    {
+        QMessageBox msgBox;
+        msgBox.setWindowTitle("Warning");
+        msgBox.setText("No task available in list!");
+        msgBox.setStandardButtons(QMessageBox::Ok);
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.exec();
+        return;
+    }
+    if(run_btn_clicked == false){ // STOP mode
+
+        // check if robot is available
+        if(robot_current_node != 15)
+        {
+            QMessageBox msgBox;
+            msgBox.setWindowTitle("Warning");
+            msgBox.setText("Robot is not available to run!");
+            msgBox.setStandardButtons(QMessageBox::Ok);
+            msgBox.setIcon(QMessageBox::Warning);
+            msgBox.exec();
+            return;
+        }
+
+        ui->pause_resume_button->setEnabled(true);
+        run_btn_clicked = true; // auto mode
+
+        // Change button to STOP
+        QPixmap pixmap_stop(":/imgs/icon_image/stop.png");
+        QIcon icon_stop(pixmap_stop);
+        ui->run_button->setIcon(icon_stop);
+        ui->run_button->setText("Stop");
+        m_timer.start(m_loopTime);
+        handle_task_timer.start(m_loopTime);
+    }
     else{
-        // Change button to RUN
+        QMessageBox msgBox;
+        msgBox.setWindowTitle("Warning");
+        msgBox.setText("Do you want to Stop?");
+        msgBox.setStandardButtons(QMessageBox::Yes);
+        msgBox.addButton(QMessageBox::No);
+        msgBox.setDefaultButton(QMessageBox::No);
+        msgBox.setIcon(QMessageBox::Question);
+
+        int ret = msgBox.exec();
         QPixmap pixmap_run(":/imgs/icon_image/icon_run.png");
         QIcon icon_run(pixmap_run);
-        ui->run_button->setIcon(icon_run);
-        ui->run_button->setText("Run");
+        switch (ret)
+         {
+          case QMessageBox::Yes:
+                // Change button to RUN
+                ui->run_button->setIcon(icon_run);
+                ui->run_button->setText("Run");
+                ui->pause_resume_button->setEnabled(false);
+                robot_mode = 0; // STOP mode
+                status_item = new QTableWidgetItem;
+                status_item->setTextAlignment(Qt::AlignCenter);
+                status_item->setText("Stop");
+                ui->monitor_tableWidget->setItem(0, 0, status_item);
 
-        ui->pause_resume_button->setEnabled(false);
-        robot_mode = 0; // STOP mode
+                flag_run_back = 1;
+                break;
+          default:
+                break;
+        }
+
     }
 
 }
@@ -502,5 +709,103 @@ void MainWindow::on_nodes_i4_pushButton_clicked()
     ui->general_status_groupBox->hide();
     disconnect(node_i4_window, SIGNAL(hide_nodei4_window()), this, SLOT(show_back()));
     connect(node_i4_window, SIGNAL(hide_nodei4_window()), this, SLOT(show_back()));
+}
+
+
+
+bool MainWindow::check_path(QString cur_node, QString next_node)
+{
+    int count = 0;
+    QString n_nodes = node_i4_window->get_neighbour(cur_node.toInt());
+    QStringList n_nodes_list = n_nodes.split(", ");
+    foreach(QString n_node, n_nodes_list){
+        if(n_node == next_node)
+            count ++;
+    }
+    if(count)
+        return true;
+    else
+        return false;
+}
+
+
+void MainWindow::on_add_node_pushButton_clicked()
+{
+    QString node_add = QString(ui->nodes_comboBox->currentText());
+    if(path_chose.isEmpty()){
+        path_chose.append(node_add);
+    }
+    else
+    {
+        if(check_path(path_chose.last(), node_add))
+            path_chose.append(node_add);
+        else
+        {
+            QMessageBox msgBox;
+            msgBox.setWindowTitle("Warning");
+            msgBox.setText("Can not add this node!");
+            msgBox.setStandardButtons(QMessageBox::Ok);
+            msgBox.setIcon(QMessageBox::Warning);
+            msgBox.exec();
+
+        }
+    }
+    qDebug() << path_chose;
+    QString temp = "";
+    for(int i = 0; i<path_chose.count(); i++)
+    {
+        if(path_chose.at(i) == path_chose.last() && path_chose.count()>1)
+            temp.append(QString(path_chose.at(i)));
+        else
+            temp.append(QString(path_chose.at(i)+ " -> "));
+    }
+    ui->path_label->setText(temp);
+//    node_start =
+
+}
+
+
+void MainWindow::on_ok_node_pushButton_clicked()
+{
+    if(path_chose.isEmpty())
+    {
+        QMessageBox msgBox;
+        msgBox.setWindowTitle("Warning");
+        msgBox.setText("Path is empty. Please set path to add!");
+        msgBox.setStandardButtons(QMessageBox::Ok);
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.exec();
+        return;
+    }
+    QTableWidgetItem *item = nullptr;
+    ui->task_tableWidget->setRowCount(ui->task_tableWidget->rowCount() + 1);
+
+    for(int j = 0; j < ui->task_tableWidget->columnCount(); j++)
+    {
+        item = new QTableWidgetItem;
+        if(j == 0)
+            item->setText(QString::number(ui->task_tableWidget->rowCount()));
+        if(j == 1)
+            item->setText(ui->path_label->text());
+        if(j == 2)
+            item->setText("Waiting");
+        ui->task_tableWidget->setItem(ui->task_tableWidget->rowCount() -1, j, item);
+    }
+    path_chose.clear();
+    ui->path_label->setText("");
+}
+
+
+void MainWindow::on_clear_path_pushButton_clicked()
+{
+    path_chose.clear();
+    ui->path_label->setText("");
+}
+
+
+void MainWindow::on_manual_mode_button_clicked()
+{
+    this->hide();
+
 }
 

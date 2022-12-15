@@ -84,6 +84,8 @@ void setting_com_window::on_connect_pushButton_clicked()
             QPixmap pixmap(":/imgs/icon_image/icon_disconnect.png");
             ui->ic_connected_label->setPixmap(pixmap);
             sc_is_connected = 0;
+            emit sc_send_is_connected(sc_is_connected);
+
         }
         else
         {

@@ -10,6 +10,8 @@
 #include <QGraphicsScene>
 #include <QGraphicsView>
 #include <QElapsedTimer>
+#include <QTableWidgetItem>
+#include "qdatetime.h"
 #include "setting_com_window.h"
 #include "nodes_info.h"
 #include "nodes.h"
@@ -36,9 +38,19 @@ private slots:
 
     void on_pause_resume_button_clicked();
 
-    void loop();
+    void update_loop();
+    void handle_task_loop();
+    void handle_run_back_loop();
 
     void on_nodes_i4_pushButton_clicked();
+
+    void on_add_node_pushButton_clicked();
+
+    void on_ok_node_pushButton_clicked();
+
+    void on_clear_path_pushButton_clicked();
+
+    void on_manual_mode_button_clicked();
 
 signals:
     void send_path_run_signal(QList<QString>);
@@ -60,22 +72,42 @@ private:
     uint8_t robot_water_capacity = 0;
 
     // auto mode info
+    uint8_t start_task_node;
     uint8_t robot_current_node = 15;
     uint8_t robot_current_orient = 'N';
     uint8_t obstacle_distance = 0;
+    int all_task_complete = 0; // 0 is true, >=1 is false
+    int task_complete = 0; // 0 is true, 1 is false
+    typedef struct{
+        int task_id;
+        bool is_completed;
+        bool is_running;
+    } task;
+    QList<task> task_to_do;
 
-    int robot_mode = 0;
-    QVector<QString> path_run, path_run_task, path_run_back;
+
+    int robot_mode = 0; // 0 is stop and 1 is running
+
+    QTime time;
+    QVector<QString> path_run, path_run_task, path_run_back, path_chose;
     QGraphicsScene *scene;
-    int robot_status = 0; // 0 is stop and 1 is running
+    QTableWidgetItem *status_item;
+    QTableWidgetItem *velocity_item;
+    QTableWidgetItem *current_orient_item;
+    QTableWidgetItem *current_node_item;
+    QTableWidgetItem *time_stop_item;
+    QTableWidgetItem *time_start_item;
+
     void create_map();
     void update_map();
     bool solve_AStar();
     void draw_connections();
     void draw_nodes();
-    void draw_path();
+    QVector<QString> draw_path(QVector<QString>);
+    void draw_task_path(QVector<QString>);
     void renderScene();
-    void create_path_run(QVector<QString>);
+    QVector<QString> create_path_run(QVector<QString>);
+    bool check_path(QString, QString);
     QVector<QVector<char>> create_orient_matrix();
 
     const QSize UNIT_SIZE   = QSize(5  , 5  );
@@ -95,9 +127,11 @@ private:
 
     int FPS           = 60;
     float m_deltaTime = 0.0f;
-    float m_loopTime  = 100;
+    float m_loopTime  = 1000;
     const float m_loopSpeed = int(1000.0f/FPS);
     QTimer m_timer;
+    QTimer handle_task_timer;
+    QTimer handle_run_back_timer;
     QElapsedTimer m_elapsedTimer;
 
     Node* nodes = nullptr;
