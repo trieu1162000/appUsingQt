@@ -2,7 +2,7 @@
 #define NODES_H
 #include <QVector>
 
-struct Node
+struct my_Node
 {
     bool is_obstacle = false;
     bool is_visited = false;
@@ -12,8 +12,8 @@ struct Node
     int y;
     int node_id;
     int node_count;
-    QVector<Node*> nodes_neighbour;
-    Node* node_parent;
+    QVector<my_Node*> nodes_neighbour;
+    my_Node* node_parent;
 };
 
 

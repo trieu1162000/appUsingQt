@@ -14,6 +14,7 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     nodes_info.cpp \
+    pi_camera_thread.cpp \
     setting_com_window.cpp
 
 HEADERS += \
@@ -21,6 +22,7 @@ HEADERS += \
     mainwindow.h \
     nodes.h \
     nodes_info.h \
+    pi_camera_thread.h \
     setting_com_window.h
 
 FORMS += \
@@ -36,3 +38,14 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 RESOURCES += \
     Resources.qrc
+
+
+INCLUDEPATH += D:\Apps\opencv-4.6.0\opencv-4.6.0\build\install\include
+
+LIBS += D:\Apps\opencv-4.6.0\opencv-4.6.0\build\bin\libopencv_core460.dll
+LIBS += D:\Apps\opencv-4.6.0\opencv-4.6.0\build\bin\libopencv_calib3d460.dll
+LIBS += D:\Apps\opencv-4.6.0\opencv-4.6.0\build\bin\libopencv_videoio460.dll
+LIBS += D:\Apps\opencv-4.6.0\opencv-4.6.0\build\bin\libopencv_imgproc460.dll
+LIBS += D:\Apps\opencv-4.6.0\opencv-4.6.0\build\bin\libopencv_imgcodecs460.dll
+LIBS += D:\Apps\opencv-4.6.0\opencv-4.6.0\build\bin\libopencv_highgui460.dll
+LIBS += D:\Apps\opencv-4.6.0\opencv-4.6.0\build\install\x64\mingw\bin\opencv_videoio_ffmpeg460_64.dll

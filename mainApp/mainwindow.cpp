@@ -19,9 +19,10 @@ MainWindow::MainWindow(QWidget *node_parent)
 //    m_elapsedTimer.start();
 //    m_timer.start(m_loopTime);
 //    handle_task_timer.start(m_loopTime);
+    m_timer.start(m_loopTime);
     scene = new QGraphicsScene(this);
     ui->graphicsView->setScene(scene);
-    node_i4_window = new nodes_info(this);
+    node_i4_window = new nodes_info();
     node_i4_window->hide();
     qDebug() << node_i4_window->get_rows();
     ui->nodes_comboBox->addItems(node_i4_window->get_node_ids());
@@ -64,7 +65,7 @@ QVector<QString> MainWindow::create_path_run(QVector<QString> path)
         if(i< path_run.size() -1)
             path.append(QString((orient_matrix[path_run[i].toInt()][path_run[i+1].toInt()])));
     }
-    qDebug() << path;
+//    qDebug() << path;
     return path;
 }
 
@@ -113,7 +114,7 @@ QVector<QVector<char>> MainWindow::create_orient_matrix()
 
 void MainWindow::create_map()
 {
-    nodes = new Node[node_i4_window->get_rows()];
+    nodes = new my_Node[node_i4_window->get_rows()];
     for(int i = 0; i < 16; i++){
         nodes[i].node_id = i;
         nodes[i].node_parent = nullptr;
@@ -138,7 +139,7 @@ void MainWindow::create_map()
 void MainWindow::update_map()
 {
     //drawing
-    ui->robot_label->setGeometry(nodes[robot_current_node].x-10, nodes[robot_current_node].y+45, 61, 31 );
+    ui->robot_label->setGeometry(nodes[robot_current_node].x-10, nodes[robot_current_node].y+55, 61, 31 );
 //    ui->
     scene->clear();
     draw_connections();
@@ -156,26 +157,26 @@ bool MainWindow::solve_AStar()
         nodes[i].node_parent      = nullptr;
     }
 
-    auto distance = [](Node* a, Node* b)
+    auto distance = [](my_Node* a, my_Node* b)
     {
         return sqrtf((a->x - b->x)*(a->x - b->x) + (a->y - b->y)*(a->y - b->y));
     };
 
-    auto heuristic = [distance](Node* a, Node* b)
+    auto heuristic = [distance](my_Node* a, my_Node* b)
     {
         return distance(a, b);
     };
 
-    Node* nodeCurrent = node_start;
+    my_Node* nodeCurrent = node_start;
     node_start->fLocalGoal = 0.0f;
     node_start->fGlobalGoal = heuristic(node_start, node_end);
 
-    QList<Node*> listNotTestedNodes;
+    QList<my_Node*> listNotTestedNodes;
     listNotTestedNodes.push_back(node_start);
 
     while(!listNotTestedNodes.empty() && nodeCurrent != node_end)
     {
-        std::sort(listNotTestedNodes.begin(), listNotTestedNodes.end(), [](const Node* lhs, const Node* rhs){ return lhs->fGlobalGoal < rhs->fGlobalGoal;});
+        std::sort(listNotTestedNodes.begin(), listNotTestedNodes.end(), [](const my_Node* lhs, const my_Node* rhs){ return lhs->fGlobalGoal < rhs->fGlobalGoal;});
 
         while(!listNotTestedNodes.empty() && listNotTestedNodes.front()->is_visited)
         {
@@ -283,7 +284,7 @@ QVector<QString> MainWindow::draw_path(QVector<QString> temp_path)
     if (node_end != nullptr)
     {
         temp_path.clear();
-        Node *p = node_end;
+        my_Node *p = node_end;
         temp_path.push_back(QString::number(p->node_id));
         while (p->node_parent != nullptr)
         {
@@ -310,14 +311,14 @@ void MainWindow::draw_task_path(QVector<QString> path)
 {
     for(int i = 0; i < path.count()-1; i++)
     {
-        Node *p = &nodes[path[i].toInt()];
+        my_Node *p = &nodes[path[i].toInt()];
         QGraphicsLineItem* lineItem = new QGraphicsLineItem();
         QPen pen((QColor(Qt::red)));
         pen.setWidth(UNIT_SIZE.width());
         pen.setBrush(QBrush(QColor(Qt::red)));
         lineItem->setPen(pen);
         lineItem->setLine(p->x + 5, p->y - 65,
-            (p+1)->x + 5, (p+1)->y - 65);
+            nodes[path[i+1].toInt()].x + 5, nodes[path[i+1].toInt()].y - 65);
         scene->addItem(lineItem);
     }
 
@@ -328,10 +329,12 @@ void MainWindow::handle_task_loop()
 {
     if(task_to_do.isEmpty() || flag_run_back == 1 || robot_mode == 2)
     {
-//        qDebug() << "called";
+//        qDebug() << "this is called";
         handle_task_timer.stop();
         return;
     }
+
+
     if(task_to_do.begin()->is_completed == false && task_to_do.begin()->is_running == false)
     {
 //        qDebug() << "called";
@@ -341,7 +344,6 @@ void MainWindow::handle_task_loop()
         // create path run
         QString temp =  ui->task_tableWidget->item(task_to_do.begin()->task_id,1)->text();
         path_run_task = temp.split(" -> ");
-        draw_task_path(path_run_task);
 //        qDebug() << "path run task" << path_run_task;
         start_task_node = nodes[path_run_task.begin()->toInt()].node_id;
         node_end = &nodes[path_run_task.begin()->toInt()];
@@ -350,24 +352,22 @@ void MainWindow::handle_task_loop()
         path_run.clear();
         solve_AStar();
         path_run = draw_path(path_run);
-        qDebug() << "path run" << path_run;
+        draw_task_path(path_run_task);
+//        qDebug() << "path task" << path_run_task;
+//        qDebug() << "path run" << path_run;
         path_run.removeLast();
         path_run = path_run + path_run_task;
         for(int i = 1; i< path_run_task.count(); i++)
             nodes[path_run_task[i].toInt()].is_obstacle = false;
-
-
 //        qDebug() << path_run;
         // send path_run
         path_run = create_path_run(path_run);
         path_run.append("G");
+//        emit send_start_task_node_signal(path_run_task.at(0).toInt());
         emit send_path_run_signal(path_run);
-        qDebug() << "stop";
-//        handle_task_timer.stop();
 
     }
-    // if receive ACK
-    // is_running = true
+
     if(task_to_do.begin()->is_running == true && task_to_do.begin()->is_completed == false)
     {
         QTableWidgetItem * item = new QTableWidgetItem();
@@ -394,8 +394,8 @@ void MainWindow::handle_task_loop()
         item2->setText(QTime::currentTime().toString("hh:mm:ss"));
         ui->task_tableWidget->setItem(task_to_do.begin()->task_id, 4, item2);
         flag_run_back = 1;
+        handle_run_back_timer.start();
         task_to_do.removeFirst();
-        handle_task_timer.stop();
         return;
     }
 
@@ -409,7 +409,7 @@ void MainWindow::handle_run_back_loop()
         handle_run_back_timer.stop();
         return;
     }
-    if(flag_run_back == 1 && robot_current_node == nodes[path_run_task.last().toInt()].node_id)
+    if(flag_run_back == 1 && flag_complete_back == 0)
     {
         node_end = &nodes[15];
         node_start = &nodes[path_run_task.last().toInt()];
@@ -423,14 +423,17 @@ void MainWindow::handle_run_back_loop()
         create_path_run(path_run_back);
         emit send_path_run_back_signal(path_run_back);
     }
+
     // if receive ACK
     // stop timer
-    if(flag_run_back == 1 && robot_current_node == 15)
+    if(flag_run_back == 1 && flag_complete_back == 1)
     {
         flag_run_back = 0;
+        flag_complete_back = 0;
         scene->clear();
         draw_connections();
         draw_nodes();
+        handle_run_back_timer.stop();
         return;
     }
 
@@ -438,6 +441,7 @@ void MainWindow::handle_run_back_loop()
 
 void MainWindow::update_loop()
 {
+
     ui->battery_progressBar->setValue(robot_battery);
     ui->water_c_progressBar->setValue(robot_water_capacity);
     velocity_item = new QTableWidgetItem;
@@ -471,88 +475,23 @@ void MainWindow::update_loop()
     current_node_item->setText(QString::number(robot_current_node));
     ui->monitor_tableWidget->setItem(0, 3, current_node_item);
 
-
-    // if receive ACK path run
-//            handle_task_timer.start(m_loopTime);
-    // if receive task_complete && task_to_do.begin()->is_running = true
-//        task_to_do.begin()->is_completed = true;
-//          task_to_do.begin()->is_completed = false;
-//            handle_task_timer.start(m_loopTime);
-
-    // if receive ACK path_run_back
-//            handle_run_back_timer.start(m_loopTime);
-//        flag_run_back = 1;
-
-
-    if(robot_current_node == 15 && flag_run_back == 0 && !handle_task_timer.isActive())
+    if(robot_mode == 2)
     {
-        handle_task_timer.start(m_loopTime);
-
-    }
-
-    if(robot_current_node == path_run_task.last().toInt() && flag_run_back == 1 && !handle_run_back_timer.isActive())
-    {
-        handle_run_back_timer.start(m_loopTime);
+        // send battey_info
+        emit send_battery_info(robot_battery);
+        // send water info
+        emit send_water_info(robot_water_capacity);
+        return;
     }
 
 
 }
 
-//void MainWindow::keyPressEvent(QKeyEvent *event)
-//{
-//    if(!event->isAutoRepeat())
-//    {
-//        if(event->key() == Qt::Key_Z)
-//        {
-//            renderMainWindow();
-//        }
-//    }
-
-//    if(event->key() == Qt::Key_Shift)
-//    {
-//        m_shiftPressed = true;
-//    }
-//    else if(event->key() == Qt::Key_Control)
-//    {
-//        m_controlPressed = true;
-//    }
-
-//    QGraphicsMainWindow::keyPressEvent(event);
-//}
-
-//void MainWindow::keyReleaseEvent(QKeyEvent *event)
-//{
-//    if(event->key() == Qt::Key_Shift)
-//    {
-//        m_shiftPressed = false;
-//    }
-//    else if(event->key() == Qt::Key_Control)
-//    {
-//        m_controlPressed = false;
-//    }
-//    QGraphicsMainWindow::keyReleaseEvent(event);
-//}
-
-//void MainWindow::mousePressEvent(QGraphicsMainWindowMouseEvent *event)
-//{
-//    run_btn_clicked = false;
-//    QGraphicsMainWindow::mousePressEvent(event);
-//}
-
-//void MainWindow::mouseReleaseEvent(QGraphicsMainWindowMouseEvent *event)
-//{
-//    m_mousePosX = event->MainWindowPos().x();
-//    m_mousePosY = event->MainWindowPos().y();
-//    run_btn_clicked = true;
-
-//    QGraphicsMainWindow::mouseReleaseEvent(event);
-//}
-
 
 void MainWindow::receive_is_connected_from_main(int value)
 {
     qDebug() << "Receive from main:" << value;
-//    receive_value_connected = value;
+    receive_value_connected = value;
     if(value){
         ui->connected_label->setText(QString(sc_window->portName +" is connected"));
         ui->connected_label->setStyleSheet("QLabel { color : Green;}");
@@ -563,29 +502,68 @@ void MainWindow::receive_is_connected_from_main(int value)
         ui->connected_label->setText("Please set COM port!");
 }
 
-void MainWindow::receive_data_from_sc(QList<std::byte> data)
+void MainWindow::receive_data_from_sc(QList<uint8_t> data)
 {
     qDebug() << "Receive data:" << data;
+
     // robot info
-    if(data.at(0) == (std::byte)0xA0)
+    if(data.at(0) == 0xA0)
     {
         robot_speed = (uint8_t) data.at(1);
         robot_battery = (uint8_t) data.at(2);
         robot_water_capacity = (uint8_t) data.at(3);
-    }
-    // auto info
-    else if(data.at(0) == (std::byte)0xA1)
-    {
-        robot_current_node = (uint8_t) data.at(1);
-        robot_current_orient = (uint8_t) data.at(2);
-        obstacle_distance = (uint8_t) data.at(3);
+        robot_current_node = (uint8_t) data.at(4);
+        robot_current_orient = (uint8_t) data.at(5);
+//        obstacle_distance = (uint8_t) data.at(6);
 
     }
+
+    // Complete path_run_task
+    else if(data.at(0) == 0xE0)
+    {
+        if(data.at(1) == 'C')
+        {
+            task_to_do.begin()->is_completed = true;
+            handle_task_timer.start();
+        }
+    }
+
+    // Complete path_run_back
+    else if(data.at(0) == 0xE1)
+    {
+        if(data.at(1) == 'C')
+        {
+            flag_complete_back = 1;
+            handle_run_back_timer.start();
+        }
+    }
+
+    // ACK received path_run_task
+    else if(data.at(0) == 0xC3)
+    {
+        if(data.at(1) == 'A')
+        {
+            task_to_do.begin()->is_running = true;
+        }
+    }
+
+    // ACK received path_run_back
+    else if(data.at(0) == 0xC4)
+    {
+        if(data.at(1) == 'A')
+        {
+            handle_run_back_timer.stop();
+        }
+    }
+
 }
 
 void MainWindow::show_back(){
     ui->control_panel_groupBox->show();
     ui->general_status_groupBox->show();
+    this->show();
+    robot_mode = 0;
+    emit send_mode_signal(robot_mode);
 }
 
 void MainWindow::on_setting_pushButton_clicked()
@@ -604,12 +582,25 @@ void MainWindow::on_setting_pushButton_clicked()
     connect(this, SIGNAL(send_path_run_back_signal(QList<QString>)), sc_window, SLOT(send_path_run_back(QList<QString>)));
     connect(this, SIGNAL(send_mode_signal(int)), sc_window, SLOT(send_mode(int)));
     connect(this, SIGNAL(send_direction_signal(int)), sc_window, SLOT(send_direction(int)));
+    connect(this, SIGNAL(send_control_pump_signal(int)), sc_window, SLOT(send_control_pump(int)));
     connect(this, SIGNAL(send_start_task_node_signal(int)), sc_window, SLOT(send_start_task_node(int)));
 //    qDebug() << "called";
 }
 
 void MainWindow::on_run_button_clicked()
 {
+    // Check COM is connected?
+    if(!receive_value_connected)
+    {
+        QMessageBox msgBox;
+        msgBox.setWindowTitle("Warning");
+        msgBox.setText("Please check and set COM Port First!");
+        msgBox.setStandardButtons(QMessageBox::Ok);
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.exec();
+        return;
+    }
+    // Create Task to do
     task_to_do.clear();
     for(int i = 0; i<ui->task_tableWidget->rowCount(); i++)
     {
@@ -623,7 +614,7 @@ void MainWindow::on_run_button_clicked()
         }
     }
 
-
+    // Check if task available
     if(task_to_do.size() == 0)
     {
         QMessageBox msgBox;
@@ -634,6 +625,8 @@ void MainWindow::on_run_button_clicked()
         msgBox.exec();
         return;
     }
+
+    // Ok to run
     if(run_btn_clicked == false){ // STOP mode
 
         // check if robot is available
@@ -650,13 +643,13 @@ void MainWindow::on_run_button_clicked()
 
         ui->pause_resume_button->setEnabled(true);
         run_btn_clicked = true; // auto mode
-
+        robot_mode = 1;
+        emit send_mode_signal(robot_mode);
         // Change button to STOP
         QPixmap pixmap_stop(":/imgs/icon_image/stop.png");
         QIcon icon_stop(pixmap_stop);
         ui->run_button->setIcon(icon_stop);
         ui->run_button->setText("Stop");
-        m_timer.start(m_loopTime);
         handle_task_timer.start(m_loopTime);
     }
     else{
@@ -672,19 +665,21 @@ void MainWindow::on_run_button_clicked()
         QPixmap pixmap_run(":/imgs/icon_image/icon_run.png");
         QIcon icon_run(pixmap_run);
         switch (ret)
-         {
+        {
           case QMessageBox::Yes:
                 // Change button to RUN
                 ui->run_button->setIcon(icon_run);
                 ui->run_button->setText("Run");
                 ui->pause_resume_button->setEnabled(false);
                 robot_mode = 0; // STOP mode
+                emit send_mode_signal(robot_mode);
                 status_item = new QTableWidgetItem;
                 status_item->setTextAlignment(Qt::AlignCenter);
                 status_item->setText("Stop");
                 ui->monitor_tableWidget->setItem(0, 0, status_item);
-
+                run_btn_clicked = false;
                 flag_run_back = 1;
+                handle_run_back_timer.start();
                 break;
           default:
                 break;
@@ -705,10 +700,9 @@ void MainWindow::on_nodes_i4_pushButton_clicked()
 {
     node_i4_window->show();
     qDebug() << "clicked";
-    ui->control_panel_groupBox->hide();
-    ui->general_status_groupBox->hide();
-    disconnect(node_i4_window, SIGNAL(hide_nodei4_window()), this, SLOT(show_back()));
-    connect(node_i4_window, SIGNAL(hide_nodei4_window()), this, SLOT(show_back()));
+    this->hide();
+    disconnect(node_i4_window, SIGNAL(hide_nodei4_window()), this, SLOT(show()));
+    connect(node_i4_window, SIGNAL(hide_nodei4_window()), this, SLOT(show()));
 }
 
 
@@ -777,6 +771,16 @@ void MainWindow::on_ok_node_pushButton_clicked()
         msgBox.exec();
         return;
     }
+    if(path_chose.size() == 1)
+    {
+        QMessageBox msgBox;
+        msgBox.setWindowTitle("Warning");
+        msgBox.setText("We need at least 2 nodes in a task!");
+        msgBox.setStandardButtons(QMessageBox::Ok);
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.exec();
+        return;
+    }
     QTableWidgetItem *item = nullptr;
     ui->task_tableWidget->setRowCount(ui->task_tableWidget->rowCount() + 1);
 
@@ -805,7 +809,60 @@ void MainWindow::on_clear_path_pushButton_clicked()
 
 void MainWindow::on_manual_mode_button_clicked()
 {
-    this->hide();
+    if(robot_mode == 1)
+    {
+        QMessageBox msgBox;
+        msgBox.setWindowTitle("Warning");
+        msgBox.setText("Do you want to switch to manual mode?");
+        msgBox.setStandardButtons(QMessageBox::Yes);
+        msgBox.addButton(QMessageBox::No);
+        msgBox.setDefaultButton(QMessageBox::No);
+        msgBox.setIcon(QMessageBox::Question);
+
+        int ret = msgBox.exec();
+        switch (ret)
+        {
+          case QMessageBox::Yes:
+                camera_window = new camera(this);
+                robot_mode = 2;
+                emit send_mode_signal(robot_mode);
+                this->hide();
+                camera_window->show();
+                connect(camera_window, SIGNAL(send_direction(int)), this, SLOT(receive_direction(int)));
+                connect(camera_window, SIGNAL(send_control_pump(int)), this, SLOT(receive_control_pump(int)));
+                connect(this, SIGNAL(send_battery_info(int)), camera_window, SLOT(receive_battery_info(int)));
+                connect(this, SIGNAL(send_water_info(int)), camera_window, SLOT(receive_water_info(int)));
+                connect(camera_window, SIGNAL(send_show_back_signal()), this, SLOT(show_back()));
+                break;
+          default:
+                break;
+        }
+    }
+    else if(robot_mode == 0)
+    {
+        camera_window = new camera();
+        robot_mode = 2;
+        emit send_mode_signal(robot_mode);
+        this->hide();
+        camera_window->show();
+        connect(camera_window, SIGNAL(send_direction(int)), this, SLOT(receive_direction(int)));
+        connect(camera_window, SIGNAL(send_control_pump(int)), this, SLOT(receive_control_pump(int)));
+        connect(this, SIGNAL(send_battery_info(int)), camera_window, SLOT(receive_battery_info(int)));
+        connect(this, SIGNAL(send_water_info(int)), camera_window, SLOT(receive_water_info(int)));
+        connect(camera_window, SIGNAL(send_show_back_signal()), this, SLOT(show_back()));
+
+    }
 
 }
+
+void MainWindow::receive_direction(int data)
+{
+    emit send_direction_signal(data);
+}
+void MainWindow::receive_control_pump(int data)
+{
+    emit send_control_pump_signal(data);
+}
+
+
 

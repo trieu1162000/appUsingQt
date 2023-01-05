@@ -6,12 +6,16 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1156</width>
-    <height>586</height>
+    <width>1148</width>
+    <height>558</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Robot Management GUI</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="Resources.qrc">
+    <normaloff>:/imgs/icon_image/icons8-home-16.png</normaloff>:/imgs/icon_image/icons8-home-16.png</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QGroupBox" name="control_panel_groupBox">
@@ -20,7 +24,7 @@
       <x>10</x>
       <y>10</y>
       <width>571</width>
-      <height>251</height>
+      <height>201</height>
      </rect>
     </property>
     <property name="font">
@@ -133,7 +137,7 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>210</y>
+       <y>160</y>
        <width>171</width>
        <height>25</height>
       </rect>
@@ -159,7 +163,7 @@
      <property name="geometry">
       <rect>
        <x>200</x>
-       <y>210</y>
+       <y>160</y>
        <width>181</width>
        <height>25</height>
       </rect>
@@ -184,8 +188,8 @@
     <widget class="QLabel" name="label_4">
      <property name="geometry">
       <rect>
-       <x>10</x>
-       <y>160</y>
+       <x>20</x>
+       <y>120</y>
        <width>21</width>
        <height>21</height>
       </rect>
@@ -244,8 +248,8 @@
     <widget class="QLabel" name="mode_label_4">
      <property name="geometry">
       <rect>
-       <x>30</x>
-       <y>160</y>
+       <x>40</x>
+       <y>120</y>
        <width>71</width>
        <height>21</height>
       </rect>
@@ -263,7 +267,7 @@
      <property name="geometry">
       <rect>
        <x>400</x>
-       <y>210</y>
+       <y>160</y>
        <width>161</width>
        <height>25</height>
       </rect>
@@ -298,9 +302,9 @@
     <widget class="QPushButton" name="nodes_i4_pushButton">
      <property name="geometry">
       <rect>
-       <x>140</x>
+       <x>370</x>
        <y>120</y>
-       <width>231</width>
+       <width>191</width>
        <height>24</height>
       </rect>
      </property>
@@ -344,8 +348,8 @@
     <widget class="QLabel" name="path_label">
      <property name="geometry">
       <rect>
-       <x>140</x>
-       <y>160</y>
+       <x>130</x>
+       <y>120</y>
        <width>231</width>
        <height>21</height>
       </rect>
@@ -410,7 +414,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>270</y>
+      <y>220</y>
       <width>571</width>
       <height>271</height>
      </rect>
@@ -434,7 +438,7 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>190</y>
+       <y>170</y>
        <width>111</width>
        <height>21</height>
       </rect>
@@ -480,7 +484,7 @@
        <x>10</x>
        <y>30</y>
        <width>551</width>
-       <height>151</height>
+       <height>131</height>
       </rect>
      </property>
      <property name="styleSheet">
@@ -543,9 +547,9 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>210</y>
+       <y>200</y>
        <width>551</width>
-       <height>51</height>
+       <height>61</height>
       </rect>
      </property>
      <property name="sizeAdjustPolicy">
@@ -607,7 +611,7 @@
       <x>590</x>
       <y>10</y>
       <width>551</width>
-      <height>511</height>
+      <height>521</height>
      </rect>
     </property>
     <property name="autoFillBackground">
@@ -622,7 +626,7 @@
       <rect>
        <x>10</x>
        <y>10</y>
-       <width>121</width>
+       <width>141</width>
        <height>21</height>
       </rect>
      </property>
@@ -643,7 +647,7 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>40</y>
+       <y>50</y>
        <width>531</width>
        <height>461</height>
       </rect>
@@ -662,8 +666,8 @@
      <property name="geometry">
       <rect>
        <x>220</x>
-       <y>470</y>
-       <width>161</width>
+       <y>480</y>
+       <width>191</width>
        <height>21</height>
       </rect>
      </property>
@@ -680,8 +684,8 @@
     <widget class="QLabel" name="robot_label">
      <property name="geometry">
       <rect>
-       <x>270</x>
-       <y>440</y>
+       <x>260</x>
+       <y>450</y>
        <width>61</width>
        <height>31</height>
       </rect>
@@ -704,8 +708,8 @@
    <widget class="QLabel" name="battery_label">
     <property name="geometry">
      <rect>
-      <x>610</x>
-      <y>540</y>
+      <x>10</x>
+      <y>500</y>
       <width>71</width>
       <height>21</height>
      </rect>
@@ -726,9 +730,9 @@
    <widget class="QProgressBar" name="battery_progressBar">
     <property name="geometry">
      <rect>
-      <x>690</x>
-      <y>540</y>
-      <width>141</width>
+      <x>80</x>
+      <y>500</y>
+      <width>171</width>
       <height>23</height>
      </rect>
     </property>
@@ -739,9 +743,9 @@
    <widget class="QProgressBar" name="water_c_progressBar">
     <property name="geometry">
      <rect>
-      <x>990</x>
-      <y>540</y>
-      <width>151</width>
+      <x>400</x>
+      <y>500</y>
+      <width>181</width>
       <height>23</height>
      </rect>
     </property>
@@ -752,8 +756,8 @@
    <widget class="QLabel" name="battery_label_2">
     <property name="geometry">
      <rect>
-      <x>860</x>
-      <y>540</y>
+      <x>280</x>
+      <y>500</y>
       <width>111</width>
       <height>21</height>
      </rect>

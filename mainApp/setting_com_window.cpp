@@ -42,6 +42,9 @@ setting_com_window::setting_com_window(QWidget *parent) :
     ui->parity_comboBox->addItem("Even Parity");
     ui->parity_comboBox->addItem("Odd Parity");
 
+    ui->brate_comboBox->setCurrentIndex(3);
+    ui->dtbits_comboBox->setCurrentIndex(3);
+
 //    header_size = header.size();
 //    EOF_size = EOFrame.size();
 
@@ -168,40 +171,56 @@ void setting_com_window::on_connect_pushButton_clicked()
 void setting_com_window::receive_message()
 {
     QByteArray data_BA = serialPort.readAll();
-    qDebug() << data_BA;
-    if(data_BA.size()<8)
+//    QByteArray data_BA(raw_data_BA.simplified());
+//    qDebug() << data_BA.size() << data_BA.toHex();
+    uint8_t byte = data_BA.at(0);
+    bytes_received.append(byte);
+//    qDebug() << bytes_received;
+    if(bytes_received.size() < 3)
         return;
+    uint length = bytes_received.size();
+    if(bytes_received[length -2] != 0xAE && bytes_received[length - 3] != 0xAE)
+        return;
+
+
+    qDebug() << bytes_received;
+//    uint8_t byte = data_BA.at(0);
+//    qDebug() << byte;
+//    if(data_BA.at(0) == (QChar)0xEE)
+//        qDebug() << "true";
+//    if(data_BA.size()<8)
+//        return;
 //    QString data(data_BA);
 //    buffer.append(data);
 //    int index_header = buffer.indexOf(header);
 //    int index_EOF = buffer.indexOf(EOFrame);
-    QDataStream stream(&data_BA, QIODevice::ReadWrite);
-    stream >> bytes_received;
-    for(int i = 0; i<bytes_received.size()-3; i++)
+//    QDataStream stream(&data_BA, QIODevice::ReadWrite);
+//    stream >> bytes_received;
+
+//    qDebug() << bytes_received;
+
+//    qDebug() << bytes_receive[0];
+//    qDebug() << bytes_receive[1];
+
+    for(int i = 0; i <bytes_received.size(); i++)
     {
-        if(bytes_received.at(i) == (std::byte) 0xFF  && bytes_received.at(i+1) == (std::byte) 0xAA)
+//        qDebug() << bytes_receive[i];
+        if(bytes_received[i] ==  0xAA  )
         {
-            start_index = i;
+
+            start_index = i+1;
             break;
         }
 
     }
-    for(int i = 0; i<bytes_received.size()-3; i++)
-    {
-        if(bytes_received.at(i) == (std::byte) 0x0A  && bytes_received.at(i+1) == (std::byte) 0x0D)
-        {
-            stop_index = i;
-            if(stop_index > start_index)
-                break;
-        }
-
-    }
+    stop_index = bytes_received.size() - 2;
     for(int i = start_index; i < stop_index; i++)
     {
         main_bytes_received.append(bytes_received.at(i));
 
     }
 
+    qDebug() <<main_bytes_received;
     emit pass_data_to_main(main_bytes_received);
     main_bytes_received.clear();
     bytes_received.clear();
@@ -210,28 +229,107 @@ void setting_com_window::receive_message()
 
 void setting_com_window::send_path_run(QList<QString> path)
 {
+    qDebug() << path;
+    QByteArray data_to_send;
+    for(int i = 0; i<path.size(); i= i+2)
+    {
+        if(path[i].toInt() == 0)
+            data_to_send.append(path[i].toInt()+16);
+        else
+            data_to_send.append(path[i].toInt());
+        data_to_send.append(path[i+1].toUtf8());
+    }
 
+    data_to_send.prepend(0xC0);
+    data_to_send.prepend(0xEE);
+    data_to_send.prepend(0xAA);
+    data_to_send.append(0xAE);
+    data_to_send.append(0xAE);
+    qDebug() << data_to_send;
+    qDebug() << data_to_send.size();
+    serialPort.write(data_to_send);
 }
 
 void setting_com_window::send_path_run_back(QList<QString> path)
 {
+    qDebug() << path;
+    QByteArray data_to_send;
+    for(int i = 0; i<path.size(); i= i+2)
+    {
+        if(path[i].toInt() == 0)
+            data_to_send.append(path[i].toInt()+16);
+        else
+            data_to_send.append(path[i].toInt());
+        data_to_send.append(path[i+1].toUtf8());
+    }
 
+    data_to_send.prepend(0xC1);
+    data_to_send.prepend(0xEE);
+    data_to_send.prepend(0xAA);
+    data_to_send.append(0xAE);
+    data_to_send.append(0xAE);
+//    qDebug() << data_to_send;
+//    qDebug() << data_to_send.size();
+    serialPort.write(data_to_send);
 }
 
-void setting_com_window::send_direction(int)
+void setting_com_window::send_start_task_node(int data)
 {
+    QByteArray data_to_send;
+    data_to_send.append(data);
 
+    data_to_send.prepend(0xC2);
+    data_to_send.prepend(0xEE);
+    data_to_send.prepend(0xAA);
+    data_to_send.append(0xAE);
+    data_to_send.append(0xAE);
+    qDebug() << data_to_send;
+    qDebug() << data_to_send.size();
+    serialPort.write(data_to_send);
 }
 
-void setting_com_window::send_start_task_node(int)
+void setting_com_window::send_mode(int data)
 {
-
+    QByteArray data_to_send;
+    data_to_send.append(data);
+    data_to_send.prepend(0xB0);
+    data_to_send.prepend(0xEE);
+    data_to_send.prepend(0xAA);
+    data_to_send.append(0xAE);
+    data_to_send.append(0xAE);
+    qDebug() << data_to_send;
+    qDebug() << data_to_send.size();
+    serialPort.write(data_to_send);
 }
 
-void setting_com_window::send_mode(int)
+void setting_com_window::send_control_pump(int data)
 {
-
+    QByteArray data_to_send;
+    data_to_send.append(data);
+    data_to_send.prepend(0xD0);
+    data_to_send.prepend(0xEE);
+    data_to_send.prepend(0xAA);
+    data_to_send.append(0xAE);
+    data_to_send.append(0xAE);
+    qDebug() << data_to_send;
+    qDebug() << data_to_send.size();
+    serialPort.write(data_to_send);
 }
+
+void setting_com_window::send_direction(int data)
+{
+    QByteArray data_to_send;
+    data_to_send.append(data);
+    data_to_send.prepend(0xD1);
+    data_to_send.prepend(0xEE);
+    data_to_send.prepend(0xAA);
+    data_to_send.append(0xAE);
+    data_to_send.append(0xAE);
+    qDebug() << data_to_send;
+    qDebug() << data_to_send.size();
+    serialPort.write(data_to_send);
+}
+
 
 
 

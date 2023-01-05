@@ -11,10 +11,12 @@
 #include <QGraphicsView>
 #include <QElapsedTimer>
 #include <QTableWidgetItem>
+//#include <opencv2/opencv.hpp>
 #include "qdatetime.h"
 #include "setting_com_window.h"
 #include "nodes_info.h"
 #include "nodes.h"
+#include "camera.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -33,7 +35,7 @@ private slots:
     void on_setting_pushButton_clicked();
     void receive_is_connected_from_main(int);
     void on_run_button_clicked();
-    void receive_data_from_sc(QList<std::byte>);
+    void receive_data_from_sc(QList<uint8_t>);
     void show_back();
 
     void on_pause_resume_button_clicked();
@@ -52,15 +54,22 @@ private slots:
 
     void on_manual_mode_button_clicked();
 
+    void receive_direction(int);
+    void receive_control_pump(int);
+
 signals:
     void send_path_run_signal(QList<QString>);
     void send_path_run_back_signal(QList<QString>);
     void send_mode_signal(int);
     void send_direction_signal(int);
+    void send_control_pump_signal(int);
     void send_start_task_node_signal(int);
+    void send_battery_info(int);
+    void send_water_info(int);
 
 private:
     setting_com_window *sc_window;
+    camera *camera_window;
     nodes_info *node_i4_window;
     int sc_is_created = 0;
     int nodei4_is_created = 0;
@@ -77,7 +86,8 @@ private:
     uint8_t robot_current_orient = 'N';
     uint8_t obstacle_distance = 0;
     int all_task_complete = 0; // 0 is true, >=1 is false
-    int task_complete = 0; // 0 is true, 1 is false
+    int task_complete_flag = 0; // 0 is true, 1 is false
+    int back_complete_flag = 0; // 0 is true, 1 is false
     typedef struct{
         int task_id;
         bool is_completed;
@@ -114,10 +124,13 @@ private:
     const QSize WINDOW_SIZE = QSize(135, 135);
     const QSize SCENE_SIZE  = QSize(UNIT_SIZE.width()*WINDOW_SIZE.width(), UNIT_SIZE.height()*WINDOW_SIZE.height());
 
-    QList<Node*> nodes_in_path;
+    QList<my_Node*> nodes_in_path;
     int nMapWidth = 5;
     int nMapHeight = 3;
     int flag_run_back = 0;
+    int flag_ACK_task = 0;
+    int flag_ACK_back = 0;
+    int flag_complete_back = 0;
 
     int m_mousePosX = 0;
     int m_mousePosY = 0;
@@ -134,9 +147,9 @@ private:
     QTimer handle_run_back_timer;
     QElapsedTimer m_elapsedTimer;
 
-    Node* nodes = nullptr;
-    Node* node_start = nullptr;
-    Node* node_end = nullptr;
+    my_Node* nodes = nullptr;
+    my_Node* node_start = nullptr;
+    my_Node* node_end = nullptr;
 
     QVector<QVector<char>> orient_matrix;
 

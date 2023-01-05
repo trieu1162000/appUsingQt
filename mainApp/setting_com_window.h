@@ -32,15 +32,16 @@ private slots:
     void send_mode(int);
     void send_direction(int);
     void send_start_task_node(int);
+    void send_control_pump(int);
 
 signals:
     void sc_send_is_connected(int);
-    void pass_data_to_main(QList<std::byte>);
+    void pass_data_to_main(QList<uint8_t>);
 
 private:
     Ui::setting_com_window *ui;
-    QList<std::byte> bytes_received;
-    QList<std::byte> main_bytes_received;
+    QList<uint8_t> bytes_received;
+    QList<uint8_t> main_bytes_received;
     int start_index;
     int stop_index;
 };
